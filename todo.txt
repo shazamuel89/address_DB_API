@@ -1,5 +1,41 @@
 - Make sure import statements are in try catch blocks
 - Finish adding 'logging comments' to Address.py
-- Change comments to logging statements
-- Write controller.py
+- Add 'logging comments' to controller.py
+- Add input checks to controller.py
 - Write view.py
+- Add 'logging comments' to view.py
+- Change comments to logging statements
+- Add beginning comments to all files
+- Figure out how to handle when success is false and error type and another item are
+  provided in the result dictionary
+
+Feedback from midterm project:
+
+- When asking the user: "Please enter the position of this address in the route
+  order" you should prompt what you are expecting the user to enter.
+
+- Same as the last one, when asking the user "Please enter the number of the route's
+  section that this address is on", prompt what you are expecting.
+
+- When a user chooses 3 to update an existing address, you need to show what
+  addresses are currently in the system, and then let user make options. Because no
+  one could remember what they had entered after a while.
+
+- Continue on 3), when the update is started, you should prompt the current setting
+  of that address, then let user choose whether they want to update it, other wise,
+  you are basically having user to enter the whole address information again, which
+  is basically wasting time. Here is an example: The current street number is 600,
+  if you want to change it, please type your new number, if you do not want to
+  change it, press Enter to the next "Street name".
+
+- Same as 3), when users choose to delete an existing address, please prompt what's
+  already saved, then let the user choose which to delete.
+
+- Provide option to get out of the update or delete mode, for example: enter the
+  position of the address entry you would like to delete (enter 0 to go to the main
+  menu): 
+
+- Last suggestion, make the record persist between the execution of the program.
+  This means you should save the user entered addresses in a file, which contains
+  dictionaries, each key would be an address. So next time a user runs the program,
+  it reads the file, and then it pulls information from the dictionaries. 
