@@ -1,0 +1,5 @@
+- Make sure import statements are in try catch blocks
+- Finish adding 'logging comments' to Address.py
+- Change comments to logging statements
+- Write controller.py
+- Write view.py

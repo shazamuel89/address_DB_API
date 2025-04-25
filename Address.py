@@ -3,7 +3,18 @@ import shelve
 class Address:
     DB_FILE = 'address_book.db' # Setting filename constant for database access
 
-    def __init__(self, addressNumber = None, street = None, unit = None, names = None, position = None, section = None, isBusiness = None, isCBU = None, isVacant = None):
+    def __init__(
+        self,
+        addressNumber = None,
+        street = None,
+        unit = None,
+        names = None,
+        position = None,
+        section = None,
+        isBusiness = None,
+        isCBU = None,
+        isVacant = None
+    ):
         self.addressNumber = addressNumber
         self.street = street
         self.unit = unit
@@ -16,10 +27,10 @@ class Address:
     
     
     @staticmethod
-    def read_single(position):
+    def read_single(positionToRead):
         with shelve.open(Address.DB_FILE) as addressBook:
-            if (position in addressBook):
-                address = addressBook[str(position)]
+            if (str(positionToRead) in addressBook):
+                address = addressBook[str(positionToRead)]
                 return {
                     'addressNumber': address.addressNumber,
                     'street':        address.street,
@@ -42,6 +53,7 @@ class Address:
             addressBookToReturn = []
             for position in range(1, lastPosition):
                 addressBookToReturn.append(Address.read_single(position))
+            return addressBookToReturn
         else:
             return None
 
@@ -70,10 +82,12 @@ class Address:
             Address.delete(initialPosition) # Deleting the address at the initial position first because shifting the higher positions back won't affect the lower position of the updated address
             self.create()   # Inserting the updated address into the new position
             return Address.read_single(self.position)   # Returning address's data to confirm that the update was successful
+        
         elif (self.position > initialPosition): # Checking if the updated address is being moved to a higher position
             self.create()   # Inserting the updated address first to get it into the desired spot between other addresses
             Address.delete(initialPosition) # Deleting the address at the initial position; although updated address's position is now one less than desired position, addresses are still in the desired order
             return Address.read_single(self.position - 1)   # Returning address's data at the decremented position to confirm that the update was successful
+        
         else:
             Address.delete(initialPosition) # Since updated address's position is the same as its initial position, deletion and creation order don't matter; deleting the address at the initial position
             self.create()   # Inserting the updated address at the same position
