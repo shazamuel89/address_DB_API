@@ -16,9 +16,9 @@ class Address:
         isVacant = None
     ):
         self.addressNumber = addressNumber
-        self.street = street
-        self.unit = unit
-        self.names = names
+        self.street = street.upper()
+        self.unit = unit.upper if unit else unit
+        self.names = [name.upper() for name in names]
         self.position = position
         self.section = section
         self.isBusiness = isBusiness
@@ -51,7 +51,7 @@ class Address:
         lastPosition = Address.get_last_position()
         if (lastPosition):
             addressBookToReturn = []
-            for position in range(1, lastPosition):
+            for position in range(1, lastPosition + 1):
                 addressBookToReturn.append(Address.read_single(position))
             return addressBookToReturn
         else:
@@ -60,7 +60,7 @@ class Address:
     
     def create(self):   # Beginning create() execution
         lastPosition = Address.get_last_position()  # Calling get_last_position() to get the last address's position number
-        if (lastPosition is None): # Checking if address book is empty by checking existence of lastPosition
+        if (not lastPosition): # Checking if address book is empty by checking existence of lastPosition
             lastPosition = 0    # Since address book is empty, setting lastPosition to 0 so the address's position can be set to 1
         if (self.position > (lastPosition)):    # Checking if the given position is beyond the existing last position
             self.position = lastPosition + 1    # Since the given position is beyond the existing last position, setting address's position to be the next number after the last position
@@ -68,7 +68,9 @@ class Address:
         Address.shift_positions(self.position, 'forward')   # Calling shift_positions() to shift all addresses after the address to be inserted to the next position
         
         lastSection = Address.get_last_section()    # Calling get_last_section() to get the last section number used
-        if (self.section > lastSection):    # Checking if the given section is beyond the existing last section
+        if (not lastSection):
+            self.section = 1
+        elif (self.section > lastSection):    # Checking if the given section is beyond the existing last section
             self.section = (lastSection + 1)    # Since the given section is beyond the existing last section, setting the address's section to be the next number after the last section
 
         with shelve.open(Address.DB_FILE) as addressBook: # Finally ready to open address book to insert the new address
@@ -113,7 +115,7 @@ class Address:
             numericKeys = []
             for key in addressBook.keys():
                 numericKeys.append(int(key))
-            return numericKeys.sort()
+            return numericKeys.sorted()
 
     
     @staticmethod
@@ -129,7 +131,7 @@ class Address:
     def get_last_section():
         lastPosition = Address.get_last_position()  # Getting a number representing the last address's position
         if (not lastPosition):  # Checking if address book is empty
-            return 1            # Since address book is empty, returning 1 for the last section number
+            return None         # Since address book is empty, returning None
         with shelve.open(Address.DB_FILE) as addressBook: # Since address book is not empty, opening address book
             return addressBook[str(lastPosition)].section   # Returning the section number of the last address
 
@@ -147,7 +149,7 @@ class Address:
             return
         if (direction == 'forward'):
             keysToShift = list(reversed(keysToShift))
-        with shelve.open('address_book', writeback = True) as addressBook:
+        with shelve.open(Address.DB_FILE, writeback = True) as addressBook:
             for position in keysToShift:
                 if (direction == 'forward'):
                     keyToFill = str(position + 1)
