@@ -1,7 +1,2 @@
-- Make sure import statements are in try catch blocks
-- Finish adding 'logging comments' to Address.py
-- Add 'logging comments' to controller.py
-- Add input checks to controller.py
-- Add 'logging comments' to view.py
-- Change comments to logging statements
 - Add beginning comments to all files
+- Make sure logging.basicConfig() format is what I want

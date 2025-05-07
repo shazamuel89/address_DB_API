@@ -1,7 +1,8 @@
 import shelve
+import logging
 
 class Address:
-    DB_FILE = 'address_book.db' # Setting filename constant for database access
+    DB_FILE = 'address_book.db' # Setting filename where database is stored
 
     def __init__(
         self,
@@ -15,9 +16,10 @@ class Address:
         isCBU = None,
         isVacant = None
     ):
+        # Set all string type values to all uppercase for simplicity
         self.addressNumber = addressNumber
         self.street = street.upper()
-        self.unit = unit.upper if unit else unit
+        self.unit = unit.upper() if unit else unit
         self.names = [name.upper() for name in names]
         self.position = position
         self.section = section
@@ -28,8 +30,10 @@ class Address:
     
     @staticmethod
     def read_single(positionToRead):
+        logging.debug("Beginning function execution.")
         with shelve.open(Address.DB_FILE) as addressBook:
             if (str(positionToRead) in addressBook):
+                logging.info(f"Since an address was found at position {positionToRead}, returning the address data.")
                 address = addressBook[str(positionToRead)]
                 return {
                     'addressNumber': address.addressNumber,
@@ -43,74 +47,85 @@ class Address:
                     'isVacant':      address.isVacant,
                 }
             else:
+                logging.info(f"Since no address was found at position {positionToRead}, returning None.")
                 return None
 
     
     @staticmethod
     def read():
+        logging.debug("Beginning function execution.")
         lastPosition = Address.get_last_position()
         if (lastPosition):
+            logging.info("Since the address book is not empty, getting each address into a list and returning the list.")
             addressBookToReturn = []
             for position in range(1, lastPosition + 1):
                 addressBookToReturn.append(Address.read_single(position))
             return addressBookToReturn
         else:
+            logging.info("Since the address book is empty, returning None.")
             return None
 
     
-    def create(self):   # Beginning create() execution
-        lastPosition = Address.get_last_position()  # Calling get_last_position() to get the last address's position number
-        if (not lastPosition): # Checking if address book is empty by checking existence of lastPosition
-            lastPosition = 0    # Since address book is empty, setting lastPosition to 0 so the address's position can be set to 1
-        if (self.position > (lastPosition)):    # Checking if the given position is beyond the existing last position
-            self.position = lastPosition + 1    # Since the given position is beyond the existing last position, setting address's position to be the next number after the last position
-        
-        Address.shift_positions(self.position, 'forward')   # Calling shift_positions() to shift all addresses after the address to be inserted to the next position
-        
-        lastSection = Address.get_last_section()    # Calling get_last_section() to get the last section number used
+    def create(self):
+        logging.debug("Beginning function execution.")
+        lastPosition = Address.get_last_position()
+        if (not lastPosition):
+            logging.debug("Since address book is empty, setting position to 1.")
+            self.position = 1
+        elif (self.position > lastPosition):
+            logging.debug(f"Since the position {self.position} is beyond the last position {lastPosition}, setting the position to 1 after the last position.")
+            self.position = lastPosition + 1
+        Address.shift_positions(self.position, 'forward')
+        lastSection = Address.get_last_section()
         if (not lastSection):
+            logging.debug("Since address book is empty, setting section to 1.")
             self.section = 1
-        elif (self.section > lastSection):    # Checking if the given section is beyond the existing last section
-            self.section = (lastSection + 1)    # Since the given section is beyond the existing last section, setting the address's section to be the next number after the last section
-
-        with shelve.open(Address.DB_FILE) as addressBook: # Finally ready to open address book to insert the new address
-            addressBook[str(self.position)] = self  # Assigning the address object to the address book using its position as the key
-        
-        return Address.read_single(self.position)   # Calling read_single() to return the newly created address entry from the address book to confirm that the creation succeeded
+        elif (self.section > lastSection):
+            logging.debug(f"Since the section {self.section} is beyond the last section {lastSection}, setting the section to 1 after the last section.")
+            self.section = lastSection + 1
+        with shelve.open(Address.DB_FILE) as addressBook:
+            addressBook[str(self.position)] = self
+        return Address.read_single(self.position)
 
     
-    def update(self, initialPosition):   # Beginning update() execution
-        if (self.position < initialPosition):   # Checking if the updated address is being moved to a lower position
-            Address.delete(initialPosition) # Deleting the address at the initial position first because shifting the higher positions back won't affect the lower position of the updated address
-            self.create()   # Inserting the updated address into the new position
-            return Address.read_single(self.position)   # Returning address's data to confirm that the update was successful
-        
-        elif (self.position > initialPosition): # Checking if the updated address is being moved to a higher position
-            self.create()   # Inserting the updated address first to get it into the desired spot between other addresses
-            Address.delete(initialPosition) # Deleting the address at the initial position; although updated address's position is now one less than desired position, addresses are still in the desired order
-            return Address.read_single(self.position - 1)   # Returning address's data at the decremented position to confirm that the update was successful
-        
+    def update(self, initialPosition):
+        logging.debug("Beginning function execution.")
+        if (self.position < initialPosition):
+            logging.debug("Since the address is being moved to a lower position, deleting the address at the initial position first, because shifting the addresses back won't affect the updated address's new position.")
+            Address.delete(initialPosition)
+            self.create()
+            return Address.read_single(self.position)
+        elif (self.position > initialPosition):
+            logging.debug("Since the address is being moved to a higher position, inserting the updated address first so that shifting the addresses back won't affect the updated address's position.")
+            self.create()
+            Address.delete(initialPosition)
+            return Address.read_single(self.position - 1) # Although updated address's position is now one less than desired position due to shifting, addresses are still in the desired order
         else:
-            Address.delete(initialPosition) # Since updated address's position is the same as its initial position, deletion and creation order don't matter; deleting the address at the initial position
-            self.create()   # Inserting the updated address at the same position
-            return Address.read_single(self.position)   # Returning address's data to confirm that the update was successful
+            logging.debug("Since the updated address is remaining in the same position, the order of deletion and insertion doesn't matter.")
+            Address.delete(initialPosition)
+            self.create()
+            return Address.read_single(self.position)
 
     
     @staticmethod
-    def delete(positionToDelete):   # Beginning delete() execution
-        lastPosition = Address.get_last_position()  # Calling get_last_position() to get the last address's position number
-        if (lastPosition is None): # Checking if address book is empty by checking existence of lastPosition
-            return None # Returning None from delete() to indicate that address book is empty and there is no entry to delete
-        if (positionToDelete > (lastPosition)): # Checking if the given position is beyond the existing last position
-            return None # Returning none from delete() to indicate that given position is beyond the last address's position
-
-        addressToDelete = Address.read_single(positionToDelete) # Getting address's data saved into a dictionary before deleting
-        Address.shift_positions(positionToDelete, direction = 'backward')   # Calling shift_positions() to shift addresses after deleted address back 1 position to overwrite address being deleted
-        return addressToDelete  # Returning the deleted address's data to the controller
+    def delete(positionToDelete):
+        logging.debug("Beginning function execution.")
+        lastPosition = Address.get_last_position()
+        if (lastPosition is None):
+            logging.info("Since address book is empty, returning None.")
+            return None
+        if (positionToDelete > (lastPosition)):
+            logging.info("Since the position to delete is beyond the last position, returning None.")
+            return None
+        logging.info(f"Since an address exists at position {positionToDelete}, deleting the address at position {positionToDelete}.")
+        addressToDelete = Address.read_single(positionToDelete)
+        Address.shift_positions(positionToDelete, direction = 'backward')
+        return addressToDelete
 
     
     @staticmethod
     def get_sorted_keys():
+        logging.debug("Beginning function execution.")
         with shelve.open(Address.DB_FILE) as addressBook:
             numericKeys = []
             for key in addressBook.keys():
@@ -120,35 +135,46 @@ class Address:
     
     @staticmethod
     def get_last_position():
+        logging.debug("Beginning function execution.")
         sortedKeys = Address.get_sorted_keys()
         if (sortedKeys):
+            logging.info(f"Since the address book is not empty, returning the last position number: {max(sortedKeys)}.")
             return max(sortedKeys)
         else:
+            logging.info("Since the address book is empty, returning None.")
             return None
     
     
     @staticmethod
     def get_last_section():
-        lastPosition = Address.get_last_position()  # Getting a number representing the last address's position
-        if (not lastPosition):  # Checking if address book is empty
-            return None         # Since address book is empty, returning None
-        with shelve.open(Address.DB_FILE) as addressBook: # Since address book is not empty, opening address book
-            return addressBook[str(lastPosition)].section   # Returning the section number of the last address
+        logging.debug("Beginning function execution.")
+        lastPosition = Address.get_last_position()
+        if (not lastPosition):
+            logging.info("Since address book is empty, returning None.")
+            return None
+        with shelve.open(Address.DB_FILE) as addressBook:
+            logging.info(f"Since address book is not empty, returning the last section number: {addressBook[str(lastPosition)].section}.")
+            return addressBook[str(lastPosition)].section
 
     
     @staticmethod
     def shift_positions(startPosition, direction = 'forward'):
+        logging.debug("Beginning function execution.")
         sortedKeys = Address.get_sorted_keys()
-        if (not sortedKeys):  # This verifies that entries exist in address book
+        if (not sortedKeys):
+            logging.info("Since the address book is empty, returning.")
             return
         keysToShift = []
         for key in sortedKeys:
             if (key >= startPosition):
                 keysToShift.append(key)
-        if (not keysToShift):  # This verifies that entries still exist that need to be shifted
+        if (not keysToShift):
+            logging.info("Since there are no keys needing to be shifted, returning.")
             return
         if (direction == 'forward'):
+            logging.debug("Since the shift direction is 'forward', reversing the list of addresses to shift.")
             keysToShift = list(reversed(keysToShift))
+        logging.debug(f"The keys that will be shifted are: {keysToShift}")
         with shelve.open(Address.DB_FILE, writeback = True) as addressBook:
             for position in keysToShift:
                 if (direction == 'forward'):
@@ -160,6 +186,7 @@ class Address:
                     if (keyToMove not in addressBook):
                         del addressBook[keyToFill]
                         break
+                logging.debug(f"Overwriting the address at position {keyToFill} with the address at position {keyToMove}.")
                 addressBook[keyToFill] = addressBook[keyToMove]
-            for key in addressBook:
+            for key in addressBook: # After shifting the addresses, make sure the position value of each address matches its key in the address book, since they should be stored in position order.
                 addressBook[key].position = int(key)
