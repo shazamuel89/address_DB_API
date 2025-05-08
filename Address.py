@@ -1,3 +1,4 @@
+# shelve is the module that allows the program to store the address data in a permanent database location
 import shelve
 import logging
 
@@ -27,7 +28,11 @@ class Address:
         self.isCBU = isCBU
         self.isVacant = isVacant
     
-    
+    '''
+    read_single() is a static method that retrieves the data for an address and returns it in a dictionary.
+    It takes an int for positionToRead, which is the position value of the address to be read.
+    If no address is found, it returns None.
+    '''
     @staticmethod
     def read_single(positionToRead):
         logging.debug(f"Beginning function execution with positionToRead = {positionToRead}.")
@@ -50,7 +55,10 @@ class Address:
                 logging.info(f"Since no address was found at position {positionToRead}, returning None.")
                 return None
 
-    
+    '''
+    read() is a static method that retrieves the data for all existing addresses and returns them in a list of dictionaries.
+    If the address book is empty, it returns None.
+    '''
     @staticmethod
     def read():
         logging.debug("Beginning function execution.")
@@ -65,7 +73,11 @@ class Address:
             logging.info("Since the address book is empty, returning None.")
             return None
 
-    
+    '''
+    create() is a method that inserts an address entry into the address book.
+    The calling object is what is stored in the actual database, so the object's properties must be set to the desired values before calling this method.
+    After inserting the address entry, it reads the new entry from the address book and returns it to confirm the successful operation.
+    '''
     def create(self):
         logging.debug(f"Beginning function execution with self = {self}.")
         lastPosition = Address.get_last_position()
@@ -87,7 +99,14 @@ class Address:
             addressBook[str(self.position)] = self
         return Address.read_single(self.position)
 
-    
+    '''
+    update() is a method that updates an existing address entry in the address book.
+    The calling object is what is stored in the actual database, so the object's properties must be set to the desired values before calling this method.
+    It takes an int for initialPosition.
+    Depending on where the update is moving the address relative to its initial position, it deletes the original entry and inserts the new entry in an order that will be compatible with the shifting after each operation.
+    After updating the address entry, it reads the updated entry from the address book and returns it to confirm the successful operation.
+    If 
+    '''
     def update(self, initialPosition):
         logging.debug(f"Beginning function execution with self = {self}, initialPosition = {initialPosition}.")
         if (self.position < initialPosition):
@@ -106,7 +125,12 @@ class Address:
             self.create()
             return Address.read_single(self.position)
 
-    
+    '''
+    delete() is a static method that deletes an address entry from the address book.
+    It takes an int for positionToDelete.
+    Before deleting the address entry, it saves its data and then returns it after the deletion to provide a 'pop' like functionality.
+    If the address entry cannot be found, it returns None.
+    '''
     @staticmethod
     def delete(positionToDelete):
         logging.debug(f"Beginning function execution with positionToDelete = {positionToDelete}.")
@@ -122,7 +146,10 @@ class Address:
         Address.shift_positions(positionToDelete, direction = 'backward')
         return addressToDelete
 
-    
+    '''
+    get_sorted_keys() is a static method that returns a list that contains each key from the address book, each converted to an int, and in numeric order.
+    Since the address book uses keys that are the position value for each address, they should all be numeric strings.
+    '''
     @staticmethod
     def get_sorted_keys():
         logging.debug("Beginning function execution.")
@@ -132,7 +159,10 @@ class Address:
                 numericKeys.append(int(key))
             return sorted(numericKeys)
 
-    
+    '''
+    get_last_position() is a static method that returns the position number of the last address in the address book.
+    If the address book is empty, it returns None.
+    '''
     @staticmethod
     def get_last_position():
         logging.debug("Beginning function execution.")
@@ -144,7 +174,10 @@ class Address:
             logging.info("Since the address book is empty, returning None.")
             return None
     
-    
+    '''
+    get_last_section() is a static method that returns the section number of the last address in the address book.
+    If the address book is empty, it returns None.
+    '''
     @staticmethod
     def get_last_section():
         logging.debug("Beginning function execution.")
@@ -156,7 +189,11 @@ class Address:
             logging.info(f"Since address book is not empty, returning the last section number: {addressBook[str(lastPosition)].section}.")
             return addressBook[str(lastPosition)].section
 
-    
+    '''
+    shift_positions() is a static method that shifts the address entries in the address book 1 spot according to the parameters.
+    It takes an int for startPosition which is the initial position value of the address which is adjacent to either the address being deleted or the address to be inserted.
+    It also takes an optional string for direction, which is 'forward' by default for an insert, and the alternative is meant to be 'backward' for a deletion.
+    '''
     @staticmethod
     def shift_positions(startPosition, direction = 'forward'):
         logging.debug(f"Beginning function execution with startPosition = {startPosition}, direction = {direction}.")

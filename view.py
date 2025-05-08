@@ -21,6 +21,11 @@ except:
 
 
 # Classes
+
+'''
+This class defines the properties of a field/attribute/column for a table in a database, including the key/name, the input prompt, the data type,
+the simple constraints within the scope of the view, the more specific constraints within the scope of the controller/database, and whether or not the field is optional.
+'''
 class Field:
     def __init__(self, key, prompt, dataType, viewValidator, controllerValidator, isRequired):
         self.key = key
@@ -33,11 +38,14 @@ class Field:
 
 
 # Global variables
+
+# The inputCodes are strings that the user can type in certain situations to execute a certain action, such as cancelling the current operation or skipping an input entry.
 inputCodes = {
     'CANCEL':   '-1',
     'SKIP':     '-2',
 }
 
+# These outputStrings are strings that will be printed or displayed at certain points in the program.
 outputStrings = {
     'INTRODUCTION': '''
 Welcome to the Address API!
@@ -67,6 +75,7 @@ Please type a number corresponding to the following options:
     'ADDRESS_DELETED':          "Address Deleted:",
 }
 
+# These errorOutputs are strings that will be printed or displayed when an error occurs, and the error type matches a key in this dictionary.
 errorOutputs = {
     'ADDRESS_NOT_FOUND':    "There is no address entry with that position! Please try again.",
     'ADDRESS_BOOK_EMPTY':   "There are no existing address entries yet! Please choose another option.",
@@ -75,6 +84,7 @@ errorOutputs = {
     'INVALID_SECTION':      "The section number is invalid because it is not within the sections of the address before or after it.",
 }
 
+# This is where the properties for each of the fields/attributes/columns for the table in the database are defined.
 addressFields = [
     Field(
         'addressNumber',
@@ -152,8 +162,11 @@ addressFields = [
 
 
 # Functions
-# This function returns a dictionary containing the data for a new address entry
-# It gets input from the user for each field and uses controller functions to validate the input before moving on to the next field
+
+'''
+print_all_addresses() prints a formatted version of the entire address book to the console.
+If the address book is empty or the read fails for some other reason, then a relevant error message is printed to the console.
+'''
 def print_all_addresses():
     logging.debug("Beginning function execution.")
     addressesRead = controller.read_all_addresses()
@@ -166,6 +179,12 @@ def print_all_addresses():
         print(errorOutputs[addressesRead['errorType']])
         return False
 
+'''
+get_input_for_address_create() controls the process of retrieving input for a new address entry.
+It returns a dictionary where each key is the field name, and each value is the input received for the field.
+The input will be completely validated and converted to the correct data type before it returns the full data of the new address entry.
+If the user decides to cancel the creation, it returns None. 
+'''
 def get_input_for_address_create():
     logging.debug("Beginning function execution.")
     data = {}
@@ -181,7 +200,7 @@ def get_input_for_address_create():
                 logging.debug(f"Since userInput is empty, and this field is not required, setting {field.key} to None and moving on to the next field.")
                 data[field.key] = None
                 break
-            userInput = convert_input(field.dataType, userInput)
+            userInput = convert_input(userInput, field.dataType)
             logging.info(f"Result of calling convert_input(): {userInput}")
             if (userInput is None):
                 logging.debug("userInput could not be converted, so setting validInput to False.")
@@ -197,11 +216,28 @@ def get_input_for_address_create():
             data[field.key] = userInput
             break
     data = validate_context(data, method = 'create')
+    if (isinstance(data, str) and (data.upper() == inputCodes['CANCEL'])):
+        logging.info(f"User entered the cancel code - returning None to cancel the creation.")
+        return None
     logging.info(f"Final result of data after calling validate_context(): {data}")
     return data
 
+'''
+get_input_for_address_update() controls the process of retrieving input for an updated address entry.
+It receives an int for the positionToUpdate.
+It returns a dictionary where each key is the field name, and each value is the input received for the field.
+The input will be completely validated and converted to the correct data type before it returns the full data of the updated address entry.
+If the user decides to cancel the creation, it returns None.
+If by some chance the positionToUpdate does not match an existing address entry, then it returns False.
+'''
 def get_input_for_address_update(positionToUpdate):
     logging.debug(f"Beginning function execution with positionToUpdate = {positionToUpdate}.")
+    try:
+            positionToUpdate = int(positionToUpdate)
+    except ValueError as err:
+        logging.warning(f"Returning False since an error occurred when attempting to convert {positionToUpdate} to an int: {err}")
+        print(errorOutputs['INVALID_INPUT'])
+        return False
     findAddressToUpdate = controller.read_single_address(positionToUpdate)
     if (not findAddressToUpdate['success']):
         logging.debug("Since the address to update was not found, returning False")
@@ -223,7 +259,7 @@ def get_input_for_address_update(positionToUpdate):
                 logging.debug(f"Since userInput is empty, and this field is not required, setting {field.key} to None and moving on to the next field.")
                 data[field.key] = None
                 break
-            userInput = convert_input(field.dataType, userInput)
+            userInput = convert_input(userInput, field.dataType)
             logging.info(f"Result of calling convert_input(): {userInput}")
             if (userInput is None):
                 logging.debug("userInput could not be converted, so setting validInput to False.")
@@ -239,9 +275,19 @@ def get_input_for_address_update(positionToUpdate):
             data[field.key] = userInput
             break
     data = validate_context(data, method = 'update', initialPosition = positionToUpdate)
+    if (isinstance(data, str) and (data.upper() == inputCodes['CANCEL'])):
+        logging.info(f"User entered the cancel code - returning None to cancel the creation.")
+        return None
     logging.info(f"Final result of data after calling validate_context(): {data}")
     return data
 
+'''
+get_input_for_field() controls the receiving of input for a specific field.
+It receives a Field object for the field.
+It runs different code for the input if the dataType of the field is a list or a single item.
+It also checks for the inputCodes that the user may input.
+It returns the user's input, but it does not validate the input since that is the job of a separate function.
+'''
 def get_input_for_field(field):
     logging.debug(f"Beginning function execution with field = {field}.")
     if (isinstance(field.dataType, tuple)):
@@ -267,8 +313,20 @@ def get_input_for_field(field):
     logging.info(f"Returning {userInput}")
     return userInput
 
-def convert_input(dataType, userInput):
-    logging.debug(f"Beginning function execution with dataType = {dataType}, userInput = {userInput}.")
+'''
+convert_input() attempts to convert the input to the correct dataType.
+It receives a string for userInput and a data_type for dataType.
+If the dataType is list, then it first attempts to convert the userInput to the list type, and then attempts to convert each item in the list to the correct type.
+If the dataType is bool, then it converts a '1' to True and a '0' to False.
+For any other dataType, it simply attempts to convert it as normal.
+If it fails to convert the userInput, then it returns None.
+Otherwise, it returns the converted userInput.
+'''
+def convert_input(userInput, dataType):
+    logging.debug(f"Beginning function execution with userInput = {userInput}, dataType = {dataType}.")
+    if not (isinstance(dataType, type) or (isinstance(dataType, tuple) and len(dataType) == 2 and isinstance(dataType[0], type) and issubclass(dataType[0], list) and isinstance(dataType[1], type))):
+        logging.warning(f"Returning None since the argument for dataType, {dataType}, was invalid.")
+        return None
     try:
         if (isinstance(dataType, tuple)):
             logging.debug("Data type is list.")
@@ -295,6 +353,11 @@ def convert_input(dataType, userInput):
     logging.info(f"Returning {newInput}")
     return newInput
 
+'''
+validate_field() runs the validator functions, if they exist, for the field that are defined in the view and the controller scope.
+It takes a Field object for the field, and the value for userInput is assumed to be of the correct data type for the field, since this should occur after executing convert_input().
+If any of the validators fail, it returns False, otherwise it returns True.
+'''
 def validate_field(field, userInput):
     logging.debug(f"Beginning function execution with field = {field}, userInput = {userInput}.")
     if (field.viewValidator and not field.viewValidator(userInput)):
@@ -306,6 +369,16 @@ def validate_field(field, userInput):
     logging.info("Since either the validators did not exist, or they successfully validated the input, returning True.")
     return True
 
+'''
+validate_context() checks the data received for an address entry against the context of where it is being inserted with the position and section inputs.
+It must be executed only after all of the data for that entry has been received.
+Thus, if a field needs to be re-entered, it must be validated here.
+The function receives a dictionary containing the address entry's information for data.
+It also receives an optional string which is by default 'create', but the alternative is 'update'.
+It also receives an optional int for initialPosition, which is by default set to None and is only used if the method is 'update'.
+If the user enters the inputCode for cancel, then it returns the cancel code instead of the data dictionary.
+It returns the dictionary containing the data for the address entry once the input finally passes the context validation.
+'''
 def validate_context(data, method = 'create', initialPosition = None):
     logging.debug(f"Beginning function execution with data = {data}, method = {method}, initialPosition = {initialPosition}.")
     for field in addressFields:
@@ -326,8 +399,11 @@ def validate_context(data, method = 'create', initialPosition = None):
     print(errorOutputs['INVALID_SECTION'])
     while True:
         sectionInput = input(sectionField.prompt).strip()
+        if (sectionInput.upper() == inputCodes['CANCEL']):
+            logging.info("Since the user entered a value that matches the code for CANCEL, returning the code they entered to signal to the calling function their intention.")
+            return sectionInput
         logging.info(f"User input: {sectionInput}")
-        sectionInput = convert_input(sectionField.dataType, sectionInput)
+        sectionInput = convert_input(sectionInput, sectionField.dataType)
         if (not sectionInput):
             logging.debug("User entered an empty string, so restart input loop.")
             print(errorOutputs['INVALID_INPUT'])
@@ -341,6 +417,12 @@ def validate_context(data, method = 'create', initialPosition = None):
     logging.info("The context was successfully validated, so returning data.")
     return data
 
+'''
+get_existing_address_choice() gets user input for a position number for an existing address.
+If the user enters the inputCode for cancel, then it returns None.
+If the position is invalid or not found, it restarts the input loop.
+If the address is found, then it returns the position number as an int.
+'''
 def get_existing_address_choice():
     logging.debug("Beginning function execution.")
     while True:
@@ -349,12 +431,22 @@ def get_existing_address_choice():
         if (choice.upper() == inputCodes['CANCEL']):
             logging.info("User entered the cancel code - returning None to cancel the operation.")
             return None
+        try:
+            choice = int(choice)
+        except ValueError as err:
+            logging.warning(f"Restarting input loop since an error occurred when attempting to convert {choice} to an int: {err}")
+            print(errorOutputs['INVALID_INPUT'])
+            continue
         if (controller.read_single_address(choice)['success']):
             logging.info(f"The address entry was found, so returning {choice}.")
             return choice
         logging.debug(f"No address entry was found at {choice}, so restarting loop.")
         print(errorOutputs['ADDRESS_NOT_FOUND'])
 
+'''
+output_address() returns a formatted string that contains the information for an address entry.
+It receives a dictionary containing the address's data for addressData.
+'''
 def output_address(addressData):
     logging.debug("Beginning function execution.")
     leftWidth = 20
@@ -371,6 +463,11 @@ def output_address(addressData):
             addressString += (key.ljust(leftWidth, separator) + str(value).rjust(rightWidth, separator) + '\n')
     return addressString
 
+'''
+output_address_book() returns a formatted string containing the data for all of the addresses in the address book.
+If the address book is empty, it simply returns an empty dictionary.
+It receives a list of dictionaries where each dictionary contains the data for an address in the address book.
+'''
 def output_address_book(addressesData):
     logging.debug("Beginning function execution.")
     if (not addressesData):
@@ -382,6 +479,9 @@ def output_address_book(addressesData):
         addressBookString += '\n' + separator + '\n'
     return addressBookString
 
+'''
+clear_console() simply clears the console of all text, using the method that is correct for the current operating system.
+'''
 def clear_console():
     logging.debug("Beginning function execution.")
     if (os.name == 'nt'):
