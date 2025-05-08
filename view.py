@@ -4,7 +4,11 @@ import os
 import logging
 
 # Logging configuration
-logging.basicConfig(filename='myLogs.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s - %(funcName)s - %(filename)s')
+''' Format example:
+myFile.py   at line 17  (DEBUG):
+    lookup_address()    -   No address was found at position 7.
+'''
+logging.basicConfig(filename='logFile.txt', level=logging.DEBUG, format='%(filename)s\tat line %(lineno)s\t(%(levelname)s):\n\t%(funcName)s()\t-\t%(message)s\n')
 
 # Imports for custom modules
 try:
@@ -25,7 +29,7 @@ class Field:
         self.viewValidator = viewValidator
         self.controllerValidator = controllerValidator
         self.isRequired = isRequired
-        logging.info(f"Created field object with properties:\nkey: {key}\nprompt: {prompt}\ndataType: {dataType}\nviewValidator: {viewValidator}\ncontrollerValidator: {controllerValidator}\nisRequired: {isRequired}")
+        logging.info(f"Created field object with properties:\n\t\tkey: {key}\n\t\tprompt: {prompt}\n\t\tdataType: {dataType}\n\t\tviewValidator: {viewValidator}\n\t\tcontrollerValidator: {controllerValidator}\n\t\tisRequired: {isRequired}")
 
 
 # Global variables
@@ -41,7 +45,8 @@ This tool is meant to be used for the storing and managing of the information fo
 In this program, you can read existing address entries, create new address entries, update existing address entries, and delete existing address entries.
 These address entries are saved to your local computer, and they can be retrieved after exiting this program.
 ''',
-    'MENU': '''Please type a number corresponding to the following options:
+    'MENU': '''
+Please type a number corresponding to the following options:
 1 - Read address entries
 2 - Create a new address entry
 3 - Update an existing address entry
@@ -168,7 +173,7 @@ def get_input_for_address_create():
         while True:
             userInput = get_input_for_field(field)
             logging.info(f"userInput is {userInput}")
-            if (userInput.upper() == inputCodes['CANCEL']):
+            if ((isinstance(userInput, str)) and (userInput.upper() == inputCodes['CANCEL'])):
                 logging.info(f"User entered the cancel code - returning None to cancel the creation.")
                 return None
             validInput = True
@@ -181,7 +186,7 @@ def get_input_for_address_create():
             if (userInput is None):
                 logging.debug("userInput could not be converted, so setting validInput to False.")
                 validInput = False
-            if (not validate_field(field, userInput)):
+            elif (not validate_field(field, userInput)):
                 logging.debug("userInput could not be validated on the field's constraints, so setting validInput to False.")
                 validInput = False
             if (not validInput):
@@ -196,7 +201,7 @@ def get_input_for_address_create():
     return data
 
 def get_input_for_address_update(positionToUpdate):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with positionToUpdate = {positionToUpdate}.")
     findAddressToUpdate = controller.read_single_address(positionToUpdate)
     if (not findAddressToUpdate['success']):
         logging.debug("Since the address to update was not found, returning False")
@@ -207,10 +212,10 @@ def get_input_for_address_update(positionToUpdate):
         while True:
             userInput = get_input_for_field(field)
             logging.info(f"userInput is {userInput}")
-            if (userInput.upper() == inputCodes['CANCEL']):
+            if ((isinstance(userInput, str)) and (userInput.upper() == inputCodes['CANCEL'])):
                 logging.info("User entered the cancel code - returning None to cancel the update.")
                 return None
-            if (userInput.upper() == inputCodes['SKIP']):
+            if ((isinstance(userInput, str)) and (userInput.upper() == inputCodes['SKIP'])):
                 logging.debug("User entered the skip code - breaking the loop for this field's input.")
                 break
             validInput = True
@@ -223,7 +228,7 @@ def get_input_for_address_update(positionToUpdate):
             if (userInput is None):
                 logging.debug("userInput could not be converted, so setting validInput to False.")
                 validInput = False
-            if (not validate_field(field, userInput)):
+            elif (not validate_field(field, userInput)):
                 logging.debug("userInput could not be validated on the field's constraints, so setting validInput to False.")
                 validInput = False
             if (not validInput):
@@ -238,7 +243,7 @@ def get_input_for_address_update(positionToUpdate):
     return data
 
 def get_input_for_field(field):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with field = {field}.")
     if (isinstance(field.dataType, tuple)):
         logging.debug(f"{field}'s data type is list, so getting input for a list.")
         userInput = []
@@ -263,7 +268,7 @@ def get_input_for_field(field):
     return userInput
 
 def convert_input(dataType, userInput):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with dataType = {dataType}, userInput = {userInput}.")
     try:
         if (isinstance(dataType, tuple)):
             logging.debug("Data type is list.")
@@ -291,18 +296,18 @@ def convert_input(dataType, userInput):
     return newInput
 
 def validate_field(field, userInput):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with field = {field}, userInput = {userInput}.")
     if (field.viewValidator and not field.viewValidator(userInput)):
-        logging.info("Since the viewValidator exists, and it failed to validate the input, returning False.")
+        logging.info("Since the view validator exists, and it failed to validate the input, returning False.")
         return False
     if (field.controllerValidator and not field.controllerValidator(userInput)):
-        logging.info("Since the controllerValidator exists, and it failed to validate the input, returning False.")
+        logging.info("Since the controller validator exists, and it failed to validate the input, returning False.")
         return False
     logging.info("Since either the validators did not exist, or they successfully validated the input, returning True.")
     return True
 
 def validate_context(data, method = 'create', initialPosition = None):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with data = {data}, method = {method}, initialPosition = {initialPosition}.")
     for field in addressFields:
         if (field.key == 'section'):
             logging.debug("Section field was located.")
@@ -386,7 +391,7 @@ def clear_console():
 
 
 # Beginning execution of main program
-logging.debug("\n\nBeginning main program execution.")
+logging.debug("Beginning main program execution.")
 print(outputStrings['INTRODUCTION'])
 while (True):
     choice = input(outputStrings['MENU']).strip()

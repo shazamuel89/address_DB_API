@@ -1,2 +1,4 @@
 - Add beginning comments to all files
-- Make sure logging.basicConfig() format is what I want
+- Add function description comments to all functions
+- Check in functions that parameters are of the correct type by attempting to convert them and excepting the ValueError if not
+- Finish testing rest of update functionality for a single address entry existing, then check shifting and other stuff for multiple address entries existing.

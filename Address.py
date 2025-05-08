@@ -30,7 +30,7 @@ class Address:
     
     @staticmethod
     def read_single(positionToRead):
-        logging.debug("Beginning function execution.")
+        logging.debug(f"Beginning function execution with positionToRead = {positionToRead}.")
         with shelve.open(Address.DB_FILE) as addressBook:
             if (str(positionToRead) in addressBook):
                 logging.info(f"Since an address was found at position {positionToRead}, returning the address data.")
@@ -67,7 +67,7 @@ class Address:
 
     
     def create(self):
-        logging.debug("Beginning function execution.")
+        logging.debug(f"Beginning function execution with self = {self}.")
         lastPosition = Address.get_last_position()
         if (not lastPosition):
             logging.debug("Since address book is empty, setting position to 1.")
@@ -89,7 +89,7 @@ class Address:
 
     
     def update(self, initialPosition):
-        logging.debug("Beginning function execution.")
+        logging.debug(f"Beginning function execution with self = {self}, initialPosition = {initialPosition}.")
         if (self.position < initialPosition):
             logging.debug("Since the address is being moved to a lower position, deleting the address at the initial position first, because shifting the addresses back won't affect the updated address's new position.")
             Address.delete(initialPosition)
@@ -109,7 +109,7 @@ class Address:
     
     @staticmethod
     def delete(positionToDelete):
-        logging.debug("Beginning function execution.")
+        logging.debug(f"Beginning function execution with positionToDelete = {positionToDelete}.")
         lastPosition = Address.get_last_position()
         if (lastPosition is None):
             logging.info("Since address book is empty, returning None.")
@@ -130,7 +130,7 @@ class Address:
             numericKeys = []
             for key in addressBook.keys():
                 numericKeys.append(int(key))
-            return numericKeys.sorted()
+            return sorted(numericKeys)
 
     
     @staticmethod
@@ -159,7 +159,7 @@ class Address:
     
     @staticmethod
     def shift_positions(startPosition, direction = 'forward'):
-        logging.debug("Beginning function execution.")
+        logging.debug(f"Beginning function execution with startPosition = {startPosition}, direction = {direction}.")
         sortedKeys = Address.get_sorted_keys()
         if (not sortedKeys):
             logging.info("Since the address book is empty, returning.")

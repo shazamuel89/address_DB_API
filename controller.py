@@ -11,7 +11,7 @@ except:
 
 
 def read_single_address(positionToRead):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with positionToRead = {positionToRead}.")
     address = Address.read_single(positionToRead)
     if (address):
         logging.info("Since address exists, returning success response.")
@@ -43,7 +43,7 @@ def read_all_addresses():
         }
 
 def create_address(addressData):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with addressData = {addressData}.")
     try:
         address = Address(
             addressData['addressNumber'],
@@ -70,7 +70,7 @@ def create_address(addressData):
     }
 
 def update_address(addressData, initialPosition):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with addressData = {addressData}, initialPosition = {initialPosition}.")
     try:
         address = Address(
             addressData['addressNumber'],
@@ -89,6 +89,14 @@ def update_address(addressData, initialPosition):
             'success':     False,
             'errorType':   'MISSING_FIELD'
         }
+    try:
+        initialPosition = int(initialPosition)
+    except ValueError as err:
+        logging.warning("Returning the failure response since an error occurred when attempting to convert {positionToDelete} to the an int: {err}")
+        return {
+            'success': False,
+            'errorType': 'INVALID_INPUT'
+        }
     updatedAddress = address.update(initialPosition)
     logging.info("The address entry was updated in the database - returning success response.")
     return {
@@ -97,7 +105,15 @@ def update_address(addressData, initialPosition):
     }
 
 def delete_address(positionToDelete):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with positionToDelete = {positionToDelete}.")
+    try:
+        positionToDelete = int(positionToDelete)
+    except ValueError as err:
+        logging.warning("Returning the failure response since an error occurred when attempting to convert {positionToDelete} to the an int: {err}")
+        return {
+            'success': False,
+            'errorType': 'INVALID_INPUT'
+        }
     deletedAddress = Address.delete(positionToDelete)
     if (deletedAddress):
         logging.info("The address entry was deleted from the database - returning success response.")
@@ -113,7 +129,7 @@ def delete_address(positionToDelete):
         }
 
 def names_validator(names):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with names = {names}.")
     if (len(names) > 10):
         logging.info(f"The names array has more than 10 items - returning False.")
         return False
@@ -125,7 +141,7 @@ def names_validator(names):
     return True
 
 def position_validator(position):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with position = {position}.")
     lastPosition = Address.get_last_position()
     if (lastPosition):
         logging.info(f"The address book is not empty - returning bool of {position} <= ({lastPosition} + 1).")
@@ -135,7 +151,7 @@ def position_validator(position):
         return (position == 1)
 
 def section_validator(section):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with section = {section}.")
     lastSection = Address.get_last_section()
     if (lastSection):
         logging.info(f"The address book is not empty - returning bool of {section} <= ({lastSection} + 1).")
@@ -145,7 +161,7 @@ def section_validator(section):
         return (section == 1)
 
 def validate_section_context_create(data):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with data = {data}.")
     sectionInput = data['section']
     lastSection = Address.get_last_section()
     if (not lastSection):
@@ -164,7 +180,7 @@ def validate_section_context_create(data):
     return ((sectionInput == previousAddress['section']) or (sectionInput == nextAddress['section']))
 
 def validate_section_context_update(data, initialPosition):
-    logging.debug("Beginning function execution.")
+    logging.debug(f"Beginning function execution with data = {data}, initialPosition = {initialPosition}.")
     sectionInput = data['section']
     lastSection = Address.get_last_section()
     # Address book is not empty if we are doing an update
