@@ -24,6 +24,29 @@ except:
     logging.critical('Address.py is missing! Program will now exit. (Please ensure you have Address.py in the same directory as this python script.)')
     sys.exit(1)
 
+
+'''
+read_all_addresses() returns a dictionary where the value for 'success' is True if the address book is not empty and False if it is empty.
+The other item in the returned dictionary is either 'result' if 'success' is True, or 'errorType' if 'success' is False.
+'result' is a list of dictionaries, each containing an address's data, and 'errorType' is a key from the errorOutputs dictionary defined in the view file.
+'''
+def read_all_addresses():
+    logging.debug("Beginning function execution.")
+    addresses = Address.read()
+    if (addresses):
+        logging.info("Since addresses is not empty, returning success response.")
+        return {
+            'success': True,
+            'result':  addresses
+        }
+    else:
+        logging.info("Since addresses is empty, returning failure response.")
+        return {
+            'success':  False,
+            'errorType': 'ADDRESS_BOOK_EMPTY'
+        }
+
+
 '''
 read_single_address() returns a dictionary where the value for 'success' is True if the address is found and False if not.
 The other item in the returned dictionary is either 'result' if 'success' is True, or 'errorType' if 'success' is False.
@@ -54,26 +77,6 @@ def read_single_address(positionToRead):
             'errorType': 'ADDRESS_NOT_FOUND'
         }
 
-'''
-read_all_addresses() returns a dictionary where the value for 'success' is True if the address book is not empty and False if it is empty.
-The other item in the returned dictionary is either 'result' if 'success' is True, or 'errorType' if 'success' is False.
-'result' is a list of dictionaries, each containing an address's data, and 'errorType' is a key from the errorOutputs dictionary defined in the view file.
-'''
-def read_all_addresses():
-    logging.debug("Beginning function execution.")
-    addresses = Address.read()
-    if (addresses):
-        logging.info("Since addresses is not empty, returning success response.")
-        return {
-            'success': True,
-            'result':  addresses
-        }
-    else:
-        logging.info("Since addresses is empty, returning failure response.")
-        return {
-            'success':  False,
-            'errorType': 'ADDRESS_BOOK_EMPTY'
-        }
 
 '''
 create_address() returns a dictionary where the value for 'success' is True if the address is created successfully and False if not.
@@ -107,6 +110,7 @@ def create_address(addressData):
         'success': True,
         'result':  createdAddress
     }
+
 
 '''
 update_address() returns a dictionary where the value for 'success' is True if the address is updated successfully and False if not.
@@ -149,6 +153,7 @@ def update_address(addressData, initialPosition):
         'result':  updatedAddress
     }
 
+
 '''
 delete_address() returns a dictionary where the value for 'success' is True if the address is deleted successfully and False if not.
 The other item in the returned dictionary is either 'result' if 'success' is True, or 'errorType' if 'success' is False.
@@ -179,6 +184,7 @@ def delete_address(positionToDelete):
             'errorType': 'ADDRESS_NOT_FOUND'
         }
 
+
 '''
 names_validator() is the controller's more specific validator function for the names field, which is a list of strings.
 It receives a list of strings for names.
@@ -196,6 +202,7 @@ def names_validator(names):
     logging.info("The names array's length and length of the individual names was successfully validated - returning True.")
     return True
 
+
 '''
 position_validator() is the controller's more specific validator function for the position field, which is an int.
 It receives an int for position.
@@ -212,6 +219,7 @@ def position_validator(position):
         logging.info(f"The address book is empty - returning bool of {position} == 1.")
         return (position == 1)
 
+
 '''
 section_validator() is the controller's more specific validator function for the section field, which is an int.
 It receives an int for section.
@@ -227,6 +235,7 @@ def section_validator(section):
     else:
         logging.info(f"The address book is empty - returning bool of {section} == 1.")
         return (section == 1)
+
 
 '''
 validate_section_context_create() checks if the given section number is within the section numbers of the addresses in the positions before and after the address being created.
@@ -252,6 +261,7 @@ def validate_section_context_create(data):
     # At this point, we know that address is being inserted between 2 existing addresses (for create)
     logging.info(f"Since address is being inserted between 2 existing addresses, {sectionInput} must be equal to the section of either the previous address or the next address - returning {(sectionInput == previousAddress['section']) or (sectionInput == nextAddress['section'])}.")
     return ((sectionInput == previousAddress['section']) or (sectionInput == nextAddress['section']))
+
 
 '''
 validate_section_context_update() checks if the given section number is within the section numbers of the addresses in the positions before and after the position that the address will be in after it is updated.
@@ -285,6 +295,7 @@ def validate_section_context_update(data, initialPosition):
         return (sectionInput == lastSection)
     logging.info(f"Since the address is being moved to a position between 2 existing addresses, {sectionInput} must be equal to the section of either the previous address or the next address - returning {(sectionInput == previousAddress['section']) or (sectionInput == nextAddress['section'])}.")
     return ((sectionInput == previousAddress['section']) or (sectionInput == nextAddress['section']))
+
 
 '''
 fieldValidators is a dictionary that contains the controller's more specific validators for each field in the address book database.

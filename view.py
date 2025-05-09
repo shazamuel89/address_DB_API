@@ -203,6 +203,72 @@ def print_all_addresses():
         print(errorOutputs[addressesRead['errorType']])
         return False
 
+
+'''
+output_address_book() returns a formatted string containing the data for all of the addresses in the address book.
+If the address book is empty, it simply returns an empty dictionary.
+It receives a list of dictionaries where each dictionary contains the data for an address in the address book.
+'''
+def output_address_book(addressesData):
+    logging.debug("Beginning function execution.")
+    if (not addressesData):
+        return {}
+    separator = '-' * 50
+    addressBookString = ''
+    for address in addressesData:
+        addressBookString += output_address(address)
+        addressBookString += '\n' + separator + '\n'
+    return addressBookString
+
+
+'''
+output_address() returns a formatted string that contains the information for an address entry.
+It receives a dictionary containing the address's data for addressData.
+'''
+def output_address(addressData):
+    logging.debug("Beginning function execution.")
+    leftWidth = 20
+    rightWidth = 30
+    separator = '_'
+    addressString = ''
+    for key, value in addressData.items():
+        if (value == None):
+            addressString += (key.ljust(leftWidth, separator) + "N/A".rjust(rightWidth, separator) + '\n')
+        elif (isinstance(value, list)):
+            listString = '/'.join(str(item) for item in value)
+            addressString += (key.ljust(leftWidth, separator) + listString.rjust(rightWidth, separator) + '\n')
+        else:
+            addressString += (key.ljust(leftWidth, separator) + str(value).rjust(rightWidth, separator) + '\n')
+    return addressString
+
+
+'''
+get_existing_address_choice() gets user input for a position number for an existing address.
+If the user enters the inputCode for cancel, then it returns None.
+If the position is invalid or not found, it restarts the input loop.
+If the address is found, then it returns the position number as an int.
+'''
+def get_existing_address_choice():
+    logging.debug("Beginning function execution.")
+    while True:
+        choice = input(outputStrings['CHOOSE_EXISTING_ADDRESS'])
+        logging.info(f"User input: {choice}")
+        if (choice.upper() == inputCodes['CANCEL']):
+            logging.info("User entered the cancel code - returning None to cancel the operation.")
+            return None
+        try:
+            choice = int(choice)
+        except ValueError as err:
+            logging.warning(f"Restarting input loop since an error occurred when attempting to convert {choice} to an int: {err}")
+            print(errorOutputs['INVALID_INPUT'])
+            continue
+        if (controller.read_single_address(choice)['success']):
+            logging.info(f"The address entry was found, so returning {choice}.")
+            return choice
+        logging.debug(f"No address entry was found at {choice}, so restarting loop.")
+        print(errorOutputs['ADDRESS_NOT_FOUND'])
+
+
 '''
 get_input_for_address_create() controls the process of retrieving input for a new address entry.
 It returns a dictionary where each key is the field name, and each value is the input received for the field.
@@ -245,6 +311,7 @@ def get_input_for_address_create():
         return None
     logging.info(f"Final result of data after calling validate_context(): {data}")
     return data
+
 
 '''
 get_input_for_address_update() controls the process of retrieving input for an updated address entry.
@@ -305,6 +372,7 @@ def get_input_for_address_update(positionToUpdate):
     logging.info(f"Final result of data after calling validate_context(): {data}")
     return data
 
+
 '''
 get_input_for_field() controls the receiving of input for a specific field.
 It receives a Field object for the field.
@@ -336,6 +404,7 @@ def get_input_for_field(field):
         userInput = userInput.strip()
     logging.info(f"Returning {userInput}")
     return userInput
+
 
 '''
 convert_input() attempts to convert the input to the correct dataType.
@@ -377,6 +446,7 @@ def convert_input(userInput, dataType):
     logging.info(f"Returning {newInput}")
     return newInput
 
+
 '''
 validate_field() runs the validator functions, if they exist, for the field that are defined in the view and the controller scope.
 It takes a Field object for the field, and the value for userInput is assumed to be of the correct data type for the field, since this should occur after executing convert_input().
@@ -392,6 +462,7 @@ def validate_field(field, userInput):
         return False
     logging.info("Since either the validators did not exist, or they successfully validated the input, returning True.")
     return True
+
 
 '''
 validate_context() checks the data received for an address entry against the context of where it is being inserted with the position and section inputs.
@@ -441,67 +512,6 @@ def validate_context(data, method = 'create', initialPosition = None):
     logging.info("The context was successfully validated, so returning data.")
     return data
 
-'''
-get_existing_address_choice() gets user input for a position number for an existing address.
-If the user enters the inputCode for cancel, then it returns None.
-If the position is invalid or not found, it restarts the input loop.
-If the address is found, then it returns the position number as an int.
-'''
-def get_existing_address_choice():
-    logging.debug("Beginning function execution.")
-    while True:
-        choice = input(outputStrings['CHOOSE_EXISTING_ADDRESS'])
-        logging.info(f"User input: {choice}")
-        if (choice.upper() == inputCodes['CANCEL']):
-            logging.info("User entered the cancel code - returning None to cancel the operation.")
-            return None
-        try:
-            choice = int(choice)
-        except ValueError as err:
-            logging.warning(f"Restarting input loop since an error occurred when attempting to convert {choice} to an int: {err}")
-            print(errorOutputs['INVALID_INPUT'])
-            continue
-        if (controller.read_single_address(choice)['success']):
-            logging.info(f"The address entry was found, so returning {choice}.")
-            return choice
-        logging.debug(f"No address entry was found at {choice}, so restarting loop.")
-        print(errorOutputs['ADDRESS_NOT_FOUND'])
-
-'''
-output_address() returns a formatted string that contains the information for an address entry.
-It receives a dictionary containing the address's data for addressData.
-'''
-def output_address(addressData):
-    logging.debug("Beginning function execution.")
-    leftWidth = 20
-    rightWidth = 30
-    separator = '_'
-    addressString = ''
-    for key, value in addressData.items():
-        if (value == None):
-            addressString += (key.ljust(leftWidth, separator) + "N/A".rjust(rightWidth, separator) + '\n')
-        elif (isinstance(value, list)):
-            listString = '/'.join(str(item) for item in value)
-            addressString += (key.ljust(leftWidth, separator) + listString.rjust(rightWidth, separator) + '\n')
-        else:
-            addressString += (key.ljust(leftWidth, separator) + str(value).rjust(rightWidth, separator) + '\n')
-    return addressString
-
-'''
-output_address_book() returns a formatted string containing the data for all of the addresses in the address book.
-If the address book is empty, it simply returns an empty dictionary.
-It receives a list of dictionaries where each dictionary contains the data for an address in the address book.
-'''
-def output_address_book(addressesData):
-    logging.debug("Beginning function execution.")
-    if (not addressesData):
-        return {}
-    separator = '-' * 50
-    addressBookString = ''
-    for address in addressesData:
-        addressBookString += output_address(address)
-        addressBookString += '\n' + separator + '\n'
-    return addressBookString
 
 '''
 clear_console() simply clears the console of all text, using the method that is correct for the current operating system.
@@ -556,6 +566,7 @@ while (True):
                 logging.debug("The user has cancelled the update, so restarting main loop.")
                 print(outputStrings['CANCEL_UPDATE'])
                 continue
+            clear_console()
             findAddressToUpdate = controller.read_single_address(positionToUpdate)
             if (findAddressToUpdate['success'] == False):
                 logging.warning(f"The address to update was not able to be found. Error info: {errorOutputs[findAddressToUpdate['errorType']]}")

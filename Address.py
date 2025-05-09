@@ -43,6 +43,26 @@ class Address:
         self.isCBU = isCBU
         self.isVacant = isVacant
     
+
+    '''
+    read() is a static method that retrieves the data for all existing addresses and returns them in a list of dictionaries.
+    If the address book is empty, it returns None.
+    '''
+    @staticmethod
+    def read():
+        logging.debug("Beginning function execution.")
+        lastPosition = Address.get_last_position()
+        if (lastPosition):
+            logging.info("Since the address book is not empty, getting each address into a list and returning the list.")
+            addressBookToReturn = []
+            for position in range(1, lastPosition + 1):
+                addressBookToReturn.append(Address.read_single(position))
+            return addressBookToReturn
+        else:
+            logging.info("Since the address book is empty, returning None.")
+            return None
+
+
     '''
     read_single() is a static method that retrieves the data for an address and returns it in a dictionary.
     It takes an int for positionToRead, which is the position value of the address to be read.
@@ -70,23 +90,6 @@ class Address:
                 logging.info(f"Since no address was found at position {positionToRead}, returning None.")
                 return None
 
-    '''
-    read() is a static method that retrieves the data for all existing addresses and returns them in a list of dictionaries.
-    If the address book is empty, it returns None.
-    '''
-    @staticmethod
-    def read():
-        logging.debug("Beginning function execution.")
-        lastPosition = Address.get_last_position()
-        if (lastPosition):
-            logging.info("Since the address book is not empty, getting each address into a list and returning the list.")
-            addressBookToReturn = []
-            for position in range(1, lastPosition + 1):
-                addressBookToReturn.append(Address.read_single(position))
-            return addressBookToReturn
-        else:
-            logging.info("Since the address book is empty, returning None.")
-            return None
 
     '''
     create() is a method that inserts an address entry into the address book.
@@ -114,6 +117,7 @@ class Address:
             addressBook[str(self.position)] = self
         return Address.read_single(self.position)
 
+
     '''
     update() is a method that updates an existing address entry in the address book.
     The calling object is what is stored in the actual database, so the object's properties must be set to the desired values before calling this method.
@@ -140,6 +144,7 @@ class Address:
             self.create()
             return Address.read_single(self.position)
 
+
     '''
     delete() is a static method that deletes an address entry from the address book.
     It takes an int for positionToDelete.
@@ -161,48 +166,6 @@ class Address:
         Address.shift_positions(positionToDelete, direction = 'backward')
         return addressToDelete
 
-    '''
-    get_sorted_keys() is a static method that returns a list that contains each key from the address book, each converted to an int, and in numeric order.
-    Since the address book uses keys that are the position value for each address, they should all be numeric strings.
-    '''
-    @staticmethod
-    def get_sorted_keys():
-        logging.debug("Beginning function execution.")
-        with shelve.open(Address.DB_FILE) as addressBook:
-            numericKeys = []
-            for key in addressBook.keys():
-                numericKeys.append(int(key))
-            return sorted(numericKeys)
-
-    '''
-    get_last_position() is a static method that returns the position number of the last address in the address book.
-    If the address book is empty, it returns None.
-    '''
-    @staticmethod
-    def get_last_position():
-        logging.debug("Beginning function execution.")
-        sortedKeys = Address.get_sorted_keys()
-        if (sortedKeys):
-            logging.info(f"Since the address book is not empty, returning the last position number: {max(sortedKeys)}.")
-            return max(sortedKeys)
-        else:
-            logging.info("Since the address book is empty, returning None.")
-            return None
-    
-    '''
-    get_last_section() is a static method that returns the section number of the last address in the address book.
-    If the address book is empty, it returns None.
-    '''
-    @staticmethod
-    def get_last_section():
-        logging.debug("Beginning function execution.")
-        lastPosition = Address.get_last_position()
-        if (not lastPosition):
-            logging.info("Since address book is empty, returning None.")
-            return None
-        with shelve.open(Address.DB_FILE) as addressBook:
-            logging.info(f"Since address book is not empty, returning the last section number: {addressBook[str(lastPosition)].section}.")
-            return addressBook[str(lastPosition)].section
 
     '''
     shift_positions() is a static method that shifts the address entries in the address book 1 spot according to the parameters.
@@ -242,3 +205,49 @@ class Address:
                 addressBook[keyToFill] = addressBook[keyToMove]
             for key in addressBook: # After shifting the addresses, make sure the position value of each address matches its key in the address book, since they should be stored in position order.
                 addressBook[key].position = int(key)
+
+
+    '''
+    get_sorted_keys() is a static method that returns a list that contains each key from the address book, each converted to an int, and in numeric order.
+    Since the address book uses keys that are the position value for each address, they should all be numeric strings.
+    '''
+    @staticmethod
+    def get_sorted_keys():
+        logging.debug("Beginning function execution.")
+        with shelve.open(Address.DB_FILE) as addressBook:
+            numericKeys = []
+            for key in addressBook.keys():
+                numericKeys.append(int(key))
+            return sorted(numericKeys)
+
+
+    '''
+    get_last_position() is a static method that returns the position number of the last address in the address book.
+    If the address book is empty, it returns None.
+    '''
+    @staticmethod
+    def get_last_position():
+        logging.debug("Beginning function execution.")
+        sortedKeys = Address.get_sorted_keys()
+        if (sortedKeys):
+            logging.info(f"Since the address book is not empty, returning the last position number: {max(sortedKeys)}.")
+            return max(sortedKeys)
+        else:
+            logging.info("Since the address book is empty, returning None.")
+            return None
+    
+
+    '''
+    get_last_section() is a static method that returns the section number of the last address in the address book.
+    If the address book is empty, it returns None.
+    '''
+    @staticmethod
+    def get_last_section():
+        logging.debug("Beginning function execution.")
+        lastPosition = Address.get_last_position()
+        if (not lastPosition):
+            logging.info("Since address book is empty, returning None.")
+            return None
+        with shelve.open(Address.DB_FILE) as addressBook:
+            logging.info(f"Since address book is not empty, returning the last section number: {addressBook[str(lastPosition)].section}.")
+            return addressBook[str(lastPosition)].section
