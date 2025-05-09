@@ -500,7 +500,7 @@ def validate_context(data, method = 'create', initialPosition = None):
         logging.info(f"User input: {sectionInput}")
         sectionInput = convert_input(sectionInput, sectionField.dataType)
         if (not sectionInput):
-            logging.debug("User entered an empty string, so restart input loop.")
+            logging.debug("User entered an input that could not be converted, so restart input loop.")
             print(errorOutputs['INVALID_INPUT'])
             continue
         data['section'] = sectionInput
