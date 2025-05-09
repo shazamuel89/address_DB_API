@@ -1,2 +1,0 @@
-- Add beginning comments to all files
-- Finish testing rest of update functionality for a single address entry existing, then check shifting and other stuff for multiple address entries existing.

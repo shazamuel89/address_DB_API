@@ -1,3 +1,27 @@
+'''
+
+INF360 - Programming in Python
+
+Final Project
+
+I, Samuel Heinrich, affirm that the work submitted for this assignment is entirely my own. I have not engaged in any form of academic dishonesty, including but not limited to cheating, plagiarism, or the use of
+unauthorized materials. This includes, but is not limited to, the use of resources such as Chegg, MyCourseHero, StackOverflow, ChatGPT, or other AI assistants, except where explicitly permitted by the instructor.
+I have neither provided nor received unauthorized assistance and have accurately cited all sources in adherence to academic standards. I understand that failing to comply with this integrity statement may result in
+consequences, including disciplinary actions as determined by my course instructor and outlined in institutional policies. By signing this statement, I acknowledge my commitment to upholding the principles of
+academic integrity.
+
+'''
+
+'''
+    This program is an API where the user can create, read, update, and delete from a database of addresses.
+    This database is stored on a .db file using the shelve module.
+    The addresses are stored in the address book using their position number as the key, and they are kept in the order of the position on the route.
+    Each address is stored as an Address object which has properties that contain the values of the address's attributes.
+    This program supports optional attributes, attributes of various types, list attributes, and different constraints for each attribute.
+    The program follows the MVC (Model View Controller) convention and is thus split into 3 files accordingly. This helps with separation of concerns and controlled access to the database.
+'''
+
+
 # Imports for built in modules
 import sys
 import os
